@@ -30,6 +30,11 @@ public class AdServiceImpl implements AdService {
     }
 
     @Override
+    public AdDto updateImage(Integer id) {
+        return adMapper.toDto(adRepo.findById(id).orElse(null));
+    }
+
+    @Override
     public List<AdDto> getAll() {
         return adRepo.findAll()
                 .stream()

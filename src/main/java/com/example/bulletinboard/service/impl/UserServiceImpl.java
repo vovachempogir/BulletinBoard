@@ -30,6 +30,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserDto updateImage(Integer id) {
+        return userMapper.toDto(userRepo.findById(id).orElse(null));
+    }
+
+    @Override
     public List<UserDto> getAll() {
         return userRepo.findAll()
                 .stream()
