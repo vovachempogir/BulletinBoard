@@ -32,15 +32,15 @@ public class CommentController {
     }
 
     @DeleteMapping("/{adId}/comments/{commentId}")
-    public ResponseEntity delete(@PathVariable Integer commentId) {
+    public ResponseEntity<CommentDto> delete(@PathVariable Integer commentId) {
         commentService.delete(commentId);
-        return new ResponseEntity(HttpStatus.NO_CONTENT);
+        return ResponseEntity.ok().build();
     }
 
     @PatchMapping("/{adId}/comments/{commentId}")
-    public ResponseEntity update(@PathVariable Integer commentId, @RequestBody CreateOrUpdateComment comment) {
+    public ResponseEntity<CreateOrUpdateComment> update(@PathVariable Integer commentId, @RequestBody CreateOrUpdateComment comment) {
         commentService.updateComment(commentId, comment);
-        return new ResponseEntity(HttpStatus.NO_CONTENT);
+        return ResponseEntity.ok().build();
     }
 
 }

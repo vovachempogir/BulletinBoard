@@ -11,6 +11,9 @@ import java.util.Optional;
 public interface UserService {
     UserDto create(UserDto usersCreation);
     Optional<UserDto> getById(Integer id);
+
+    UserDto updateImage(Integer id);
+
     List<UserDto> getAll();
     public void updateUser(Integer userId, CreateOrUpdateUser user);
 }
