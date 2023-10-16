@@ -20,7 +20,10 @@ public interface CommentMapper  {
     CommentDto toDto(Comment comment);
 
     CreateOrUpdateComment fromUpdateComment(Comment comment);
-    Comment toComment(CommentDto commentDto);
+
+    CommentDto toComment(CreateOrUpdateComment createOrUpdateComment);
+
+    Comment updateToComment(CreateOrUpdateComment createOrUpdateComment);
 
     List<CommentDto> commentsToCommentsDto(List<Comment> comments);
 }

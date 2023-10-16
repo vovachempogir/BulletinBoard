@@ -3,6 +3,7 @@ package com.example.bulletinboard.controller;
 import com.example.bulletinboard.dto.AdDto;
 import com.example.bulletinboard.dto.Ads;
 import com.example.bulletinboard.dto.CreateOrUpdateAd;
+import com.example.bulletinboard.entity.Ad;
 import com.example.bulletinboard.service.AdService;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
@@ -30,43 +31,26 @@ public class AdController {
 
     private final AdService adService;
 
-    @Value("${upload.path.ad}")
-    private String uploadPath;
-
     @GetMapping
-    public ResponseEntity<List<AdDto>> getAllAds() {
-        List<AdDto> ads = adService.getAll();
-        return ResponseEntity.ok(ads);
+    public List<AdDto> getAllAds() {
+        return adService.getAll();
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<AdDto> createAd(@RequestPart("properties") AdDto ad,
+    public AdDto createAd(@RequestPart("properties") CreateOrUpdateAd ad,
                      @RequestPart("image") MultipartFile image) throws IOException {
-        AdDto createAd = adService.create(ad);
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("Location", adService.getById(createAd.getPk()).toString());
-        if (image != null) {
-            File uploadDir = new File(uploadPath);
-            if (!uploadDir.exists()) {
-                uploadDir.mkdir();
-            }
-            String idFile = String.valueOf(adService.updateImage(ad.getPk()));
-            String resultFile = idFile + "." + image.getOriginalFilename();
-            image.transferTo(new File(uploadPath + "/" + resultFile));
-            createAd.setImage(resultFile);
-        }
-        return ResponseEntity.ok().build();
+        return adService.create(ad,image);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<AdDto>> getAdById(@PathVariable Integer id) {
-        Optional<AdDto> ad = adService.getById(id);
+    public ResponseEntity<AdDto> getAdById(@PathVariable Integer id) {
+        AdDto ad = adService.getById(id);
         return ResponseEntity.ok(ad);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<AdDto> delete(@PathVariable Integer id) {
-        if (!adService.deleteByID(id)) {
+    public ResponseEntity<AdDto> delete(@PathVariable Integer adId, Integer commentId) {
+        if (!adService.deleteByID(adId,commentId)) {
             throw new RuntimeException(String.valueOf(HttpStatus.NOT_FOUND));
         }
         return ResponseEntity.ok().build();
@@ -87,17 +71,7 @@ public class AdController {
     @PatchMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public byte[] updateAdImage(@PathVariable Integer id,
                                 @RequestParam("image") MultipartFile image) throws IOException {
-        AdDto ad = adService.updateImage(id);
-        if (image != null) {
-            File uploadDir = new File(uploadPath);
-            if (!uploadDir.exists()) {
-                uploadDir.mkdir();
-            }
-            String idFile = String.valueOf(adService.updateImage(ad.getPk()));
-            String resultFile = idFile + "." + image.getOriginalFilename();
-            image.transferTo(new File(uploadPath + "/" + resultFile));
-            ad.setImage(resultFile);
-        }
-        return image.getBytes();
+        return adService.updateImage(id, image);
+
     }
 }

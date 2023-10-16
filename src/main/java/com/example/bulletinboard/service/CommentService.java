@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.Optional;
 
 public interface CommentService {
-    CommentDto create(Integer id, CommentDto comment);
-    Optional<CommentDto> getCommentsByAdId(Integer id);
-    void delete(Integer id);
+    CommentDto create(CreateOrUpdateComment comment);
+    CommentDto getCommentsByAdId(Integer id);
+    boolean delete(Integer id);
     List<CommentDto> getAll();
-    public void updateComment(Integer userId, CreateOrUpdateComment comment);
+    void updateComment(Integer userId, CreateOrUpdateComment comment);
 
 }

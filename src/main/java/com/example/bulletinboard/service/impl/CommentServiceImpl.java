@@ -7,9 +7,10 @@ import com.example.bulletinboard.service.AdService;
 import com.example.bulletinboard.service.CommentMapper;
 import com.example.bulletinboard.service.CommentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.crossstore.ChangeSetPersister;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -20,17 +21,15 @@ import java.util.stream.Collectors;
 public class CommentServiceImpl implements CommentService {
     private final CommentRepo commentRepo;
     private final CommentMapper commentMapper;
-    private final AdService adService;
 
     @Override
-    public CommentDto create(Integer id, CommentDto comment) {
-        return commentMapper.toDto(commentRepo.save(commentMapper.toComment(comment)));
+    public CommentDto create(CreateOrUpdateComment comment) {
+        return commentMapper.toDto(commentRepo.save(commentMapper.updateToComment(comment)));
     }
 
     @Override
-    public Optional<CommentDto> getCommentsByAdId(Integer id) {
-        return Optional.ofNullable(commentMapper.toDto(commentRepo.findById(id).
-                orElse(null)));
+    public CommentDto getCommentsByAdId(Integer id) {
+        return commentMapper.toDto(commentRepo.findById(id).orElseThrow(CommentNotFoundException::new));
     }
     @Override
     public List<CommentDto> getAll() {
@@ -41,18 +40,31 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public void delete(Integer id) {
-        Comment comment = commentRepo.getById(id);
-        commentRepo.delete(comment);
+    public boolean delete(Integer id) {
+        if (commentRepo.existsById(id)) {
+            commentRepo.deleteById(id);
+            return true;
+        }
+        return false;
     }
     @Override
     public void updateComment(Integer commentId , CreateOrUpdateComment comment) {
-        AtomicReference<Optional<CreateOrUpdateComment>> atomicReference = new AtomicReference<>();
-        commentRepo.findById(commentId).ifPresentOrElse(foundComment -> {
+        commentRepo.findById(commentId).map(foundComment -> {
             foundComment.setText(comment.getText());
-            atomicReference.set(Optional.of(commentMapper.fromUpdateComment(commentRepo.save(foundComment))));
-        }, () -> {
-            atomicReference.set(Optional.empty());
-        });
+            return commentMapper.fromUpdateComment(commentRepo.save(foundComment));
+        }).orElseThrow(CommentNotFoundException::new);
+    }
+
+    private class CommentNotFoundException extends RuntimeException {
+        public CommentNotFoundException(String msg) {
+            super(msg);
+        }
+        public CommentNotFoundException(String msg, Throwable cause) {
+            super(msg, cause);
+        }
+
+        public CommentNotFoundException() {
+            super("Комментарий не найден");
+        }
     }
 }

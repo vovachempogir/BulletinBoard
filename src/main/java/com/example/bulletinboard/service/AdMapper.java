@@ -22,6 +22,8 @@ public interface AdMapper {
 
     CreateOrUpdateAd fromUpdateAd(Ad ad);
 
+    Ad createAd(CreateOrUpdateAd create);
+
     List<AdDto> adsToAd(List<Ad> ads);
 
     @Mapping(source = "id",target = "pk")
