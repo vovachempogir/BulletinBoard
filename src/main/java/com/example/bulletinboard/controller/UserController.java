@@ -1,11 +1,14 @@
 package com.example.bulletinboard.controller;
 
 import com.example.bulletinboard.dto.CreateOrUpdateUser;
+import com.example.bulletinboard.dto.NewPassword;
 import com.example.bulletinboard.dto.UserDto;
 import com.example.bulletinboard.service.UserService;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,10 +24,13 @@ public class UserController {
 
     private final UserService userService;
 
-//    @PostMapping("/setPassword")
-//    public ResponseEntity<Boolean> setPassword (@RequestBody NewPassword newPassword){
-//        return ResponseEntity.ok(userService.updatePassword(newPassword));
-//    }
+    @Value("${upload.path.user}")
+    private String uploadPath;
+
+    @PostMapping("/setPassword")
+    public ResponseEntity<Boolean> setPassword (@RequestBody NewPassword newPassword){
+        return ResponseEntity.ok(userService.updatePassword(newPassword));
+    }
 
     @GetMapping("/me")
     public UserDto getUser(String email){
