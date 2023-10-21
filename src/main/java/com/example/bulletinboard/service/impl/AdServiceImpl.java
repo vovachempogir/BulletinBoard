@@ -1,44 +1,58 @@
 package com.example.bulletinboard.service.impl;
 
 import com.example.bulletinboard.dto.AdDto;
+import com.example.bulletinboard.dto.Ads;
 import com.example.bulletinboard.dto.CreateOrUpdateAd;
+import com.example.bulletinboard.dto.Role;
 import com.example.bulletinboard.entity.Ad;
+import com.example.bulletinboard.entity.User;
 import com.example.bulletinboard.repository.AdRepo;
 import com.example.bulletinboard.repository.CommentRepo;
+import com.example.bulletinboard.repository.UserRepo;
 import com.example.bulletinboard.service.AdMapper;
 import com.example.bulletinboard.service.AdService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import static java.nio.file.StandardOpenOption.CREATE_NEW;
+import java.util.NoSuchElementException;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class AdServiceImpl implements AdService {
     private final AdRepo adRepo;
     private final CommentRepo commentRepo;
     private final AdMapper adMapper;
-
+    private final UserRepo userRepo;
+    private final UserDetails userDetails;
+    private final FilesService filesService;
     @Value("${upload.path.ad}")
     private String uploadPath;
 
     @Override
     public AdDto create(CreateOrUpdateAd createAd, MultipartFile image) throws IOException {
         Ad ad = adMapper.createAd(createAd);
+        User user = getUser();
+        ad.setUser(user);
         loadImage(ad, image);
-        return adMapper.toDto(adRepo.save(adMapper.createAd(createAd)));
+        adRepo.save(ad);
+        log.info("createAd");
+        return adMapper.toDto(ad);
     }
 
     @Override
     public AdDto getById(Integer id) {
+        log.info("getAd");
         return adMapper.toDto(adRepo.findById(id).orElseThrow(AdNotFoundException::new));
     }
 
@@ -48,23 +62,21 @@ public class AdServiceImpl implements AdService {
         if (ad.getImage() != null) {
             Files.exists(Path.of(ad.getImage()));
         }
-        ad.setImage(image.getOriginalFilename());
+        loadImage(ad, image);
         adRepo.save(ad);
         return image.getBytes();
     }
 
     @Override
-    public List<AdDto> getAll() {
-        return adRepo.findAll()
-                .stream()
-                .map(adMapper::toDto)
-                .collect(Collectors.toList());
+    public Ads getAll() {
+        log.info("getAllAdd");
+        return adMapper.to(adRepo.findAll());
     }
 
     @Override
     public void updateAd(Integer adId, CreateOrUpdateAd ad) {
         adRepo.findById(adId).map(foundAd -> {
-            foundAd.setTittle(ad.getTitle());
+            foundAd.setTitle(ad.getTitle());
             foundAd.setPrice(ad.getPrice());
             foundAd.setDescription(ad.getDescription());
             return adMapper.fromUpdateAd(adRepo.save(foundAd));
@@ -72,31 +84,14 @@ public class AdServiceImpl implements AdService {
     }
 
     @Override
-    public Boolean deleteByID(Integer adId, Integer commentId) {
-        if (adRepo.existsById(adId) & commentRepo.existsById(commentId)) {
+    public void deleteByID(Integer adId, Integer commentId) throws IOException {
+        User user = getUser();
+        Ad ad = adMapper.toAd(getById(adId));
+        if (rightsVerification(user, ad)) {
+            commentRepo.deleteAllById(Collections.singleton(commentId));
             adRepo.deleteById(adId);
-            commentRepo.deleteById(commentId);
-            return true;
+            Files.deleteIfExists(Path.of(ad.getImage()));
         }
-        return false;
-    }
-
-    public byte[] loadImage(Ad ad, MultipartFile image) throws IOException {
-        Path path = Path.of(uploadPath, image.getOriginalFilename());
-        Files.createDirectories(path.getParent());
-        Files.deleteIfExists(path);
-
-        try (InputStream is = image.getInputStream();
-             OutputStream os = Files.newOutputStream(path, CREATE_NEW);
-             BufferedInputStream bis = new BufferedInputStream(is, 1024);
-             BufferedOutputStream bos = new BufferedOutputStream(os, 1024)
-        ) {
-            bis.transferTo(bos);
-        }
-
-        ad.setImage(path.toString());
-        adRepo.save(ad);
-        return image.getBytes();
     }
 
     private class AdNotFoundException extends RuntimeException {
@@ -105,4 +100,21 @@ public class AdServiceImpl implements AdService {
         }
     }
 
+    private boolean rightsVerification(User user, Ad ad) {
+        return (user.getRole() == Role.ADMIN || ad.getUser().equals(user));
+    }
+
+    private User getUser() {
+        return userRepo.findByEmail(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+    }
+
+    private Path getPath(MultipartFile image) {
+        return Path.of(uploadPath, image.getOriginalFilename());
+    }
+
+    private void loadImage(Ad ad, MultipartFile image) throws IOException {
+        Path path = getPath(image);
+        filesService.uploadFile(image, path);
+        ad.setImage(path.toAbsolutePath().toString());
+    }
 }

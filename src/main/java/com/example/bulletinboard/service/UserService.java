@@ -9,11 +9,11 @@ import java.io.IOException;
 
 public interface UserService {
 
-    UserDto getInfoAboutUser(String email);
+    UserDto getInfoAboutUser();
 
-    UserDto updateImage(Integer id, MultipartFile image) throws IOException;
+    byte[] updateImage(MultipartFile image) throws IOException;
 
-    UserDto updateUser(String email, CreateOrUpdateUser user);
+    UserDto updateUser(CreateOrUpdateUser user);
 
     boolean updatePassword(NewPassword newPassword);
 }
