@@ -6,16 +6,14 @@ import com.example.bulletinboard.dto.UserDto;
 import com.example.bulletinboard.service.UserService;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Optional;
+
 
 @Api(tags = "Пользователи")
 @RestController
@@ -26,42 +24,29 @@ public class UserController {
 
     private final UserService userService;
 
-    @Value("${rc/main/resources/user}")
-    private String uploadPath;
-
-    @PostMapping("/setPassword")
-    public NewPassword setPassword (@RequestBody NewPassword newPassword){
-        return newPassword;
+    @PostMapping("/set_password")
+    public ResponseEntity<Boolean> setPassword (@RequestBody NewPassword newPassword){
+        return ResponseEntity.ok(userService.updatePassword(newPassword));
     }
 
     @GetMapping("/me")
-    public ResponseEntity<Optional<UserDto>> getUserById(@PathVariable Integer id){
-        Optional<UserDto> user = userService.getById(id);
-        return ResponseEntity.ok(user);
+    public UserDto getUser(){
+        return userService.getInfoAboutUser();
     }
 
     @PatchMapping("/me")
-    public ResponseEntity updateUser(@PathVariable Integer id,
-                                     @RequestBody CreateOrUpdateUser createOrUpdateUser){
-        userService.updateUser(id, createOrUpdateUser);
-        return new ResponseEntity(HttpStatus.NO_CONTENT);
+    public UserDto updateUser(@RequestBody CreateOrUpdateUser createOrUpdateUser){
+        return userService.updateUser(createOrUpdateUser);
     }
 
     @PatchMapping(value = "/me/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<UserDto> updateImage(@PathVariable Integer id,
-                                              @RequestParam("image") MultipartFile image) throws IOException {
-        UserDto user = userService.updateImage(id);
-        if (image != null) {
-            File uploadDir = new File(uploadPath);
-            if (!uploadDir.exists()) {
-                uploadDir.mkdir();
-            }
-            String idFile = String.valueOf(userService.updateImage(id));
-            String resultFile = idFile + "." + image.getOriginalFilename();
-            image.transferTo(new File(uploadPath + "/" + resultFile));
-            user.setImage(resultFile);
-            return ResponseEntity.ok().build();
-        }
-        return ResponseEntity.notFound().build();
+    public byte[] updateImage(@RequestParam("image") MultipartFile image) throws IOException {
+        return userService.updateImage(image);
     }
+
+    @GetMapping(value = "/image/{userId}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
+    public ResponseEntity<Boolean> downloadAvatar(@PathVariable int userId, HttpServletResponse response) throws IOException {
+        return ResponseEntity.ok(userService.downloadAvatar(userId, response));
+    }
+
 }

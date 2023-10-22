@@ -20,7 +20,7 @@ public class Ad {
     private Integer price;
 
     @Column(nullable = false)
-    private String tittle;
+    private String title;
 
     @Column(nullable = false)
     private String description;

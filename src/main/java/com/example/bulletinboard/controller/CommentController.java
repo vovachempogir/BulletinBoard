@@ -20,20 +20,22 @@ public class CommentController {
     private final CommentService commentService;
 
     @PostMapping("/{id}/comments")
-    public ResponseEntity<CommentDto> create(@PathVariable Integer id, @RequestBody CommentDto comment) {
+    public ResponseEntity<CommentDto> create(@PathVariable Integer id,
+                                             @RequestBody CreateOrUpdateComment comment) {
         CommentDto commentDto = commentService.create(id, comment);
         return ResponseEntity.ok(commentDto);
     }
 
     @GetMapping("/{id}/comments")
-    public ResponseEntity<Optional<CommentDto>> getCommentsByAdId(@PathVariable Integer id) {
-        Optional<CommentDto> commentDto = commentService.getCommentsByAdId(id);
-        return ResponseEntity.ok(commentDto);
+    public Comments getCommentsByAdId(@PathVariable Integer id) {
+        return commentService.getAll(id);
     }
+    
 
     @DeleteMapping("/{adId}/comments/{commentId}")
-    public ResponseEntity<CommentDto> delete(@PathVariable Integer commentId) {
-        commentService.delete(commentId);
+    public ResponseEntity<Void> delete(@PathVariable Integer adId,
+                                       @PathVariable Integer commentId) {
+        commentService.delete(adId, commentId);
         return ResponseEntity.ok().build();
     }
 
@@ -42,5 +44,7 @@ public class CommentController {
         commentService.updateComment(commentId, comment);
         return ResponseEntity.ok().build();
     }
+
+
 
 }

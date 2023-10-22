@@ -17,6 +17,9 @@ public class User {
     @Column (nullable = false)
     private String email;
 
+    @Column(nullable = false)
+    private String password;
+
     @Column(name = "first_name", nullable = false)
     private String firstName;
 
@@ -30,6 +33,6 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    @Column(nullable = false)
+    @Column
     private String image;
 }

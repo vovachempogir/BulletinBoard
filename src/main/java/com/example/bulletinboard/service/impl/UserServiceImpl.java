@@ -1,57 +1,101 @@
 package com.example.bulletinboard.service.impl;
 
 import com.example.bulletinboard.dto.CreateOrUpdateUser;
+import com.example.bulletinboard.dto.NewPassword;
 import com.example.bulletinboard.dto.UserDto;
+import com.example.bulletinboard.entity.User;
 import com.example.bulletinboard.repository.UserRepo;
 import com.example.bulletinboard.service.UserMapper;
 import com.example.bulletinboard.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
+import java.nio.file.Path;
 
+
+
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepo userRepo;
     private final UserMapper userMapper;
+    private final UserDetailsManager userDetailsManager;
+    private final UserDetails userDetails;
+    private final FilesService filesService;
+
+
+    @Value("${upload.path.user}")
+    private String uploadPath;
+
     @Override
-    public UserDto create(UserDto user) {
-        return userMapper.toDto(userRepo.save(userMapper.toUser(user)));
+    public UserDto getInfoAboutUser() {
+        log.info("getUser");
+        User user = getUser();
+        return userMapper.toDto(user);
     }
 
     @Override
-    public Optional<UserDto> getById(Integer id) {
-        return Optional.ofNullable(userMapper.toDto(userRepo.findById(id).orElse(null)));
+    @Transactional
+    public byte[] updateImage(MultipartFile image) throws IOException {
+        User user = getUser();
+        Path path = Path.of(uploadPath, image.getOriginalFilename());
+        filesService.uploadFile(image, path);
+        user.setImage(path.toAbsolutePath().toString());
+        log.info("updateImageUser");
+        userRepo.save(user);
+        return image.getBytes();
     }
 
     @Override
-    public UserDto updateImage(Integer id) {
-        return userMapper.toDto(userRepo.findById(id).orElse(null));
+    public UserDto updateUser(CreateOrUpdateUser updateUser) {
+        log.info("updateUser");
+        User user = getUser();
+        return userMapper.toDto(userRepo.save(user));
     }
 
     @Override
-    public List<UserDto> getAll() {
-        return userRepo.findAll()
-                .stream()
-                .map(userMapper::toDto)
-                .collect(Collectors.toList());
+    public boolean updatePassword(NewPassword newPassword) {
+        if (checkPassword(newPassword)){
+            userDetailsManager.changePassword(newPassword.getCurrentPassword(), newPassword.getNewPassword());
+            log.info("updatePassword");
+            return true;
+        }
+        log.info("notUpdateUser");
+        return false;
     }
 
     @Override
-    public void updateUser(Integer userId ,CreateOrUpdateUser user) {
-        AtomicReference<Optional<CreateOrUpdateUser>> atomicReference = new AtomicReference<>();
-        userRepo.findById(userId).ifPresentOrElse(foundUser -> {
-            foundUser.setFirstName(user.getFirstName());
-            foundUser.setLastName(user.getLastName());
-            foundUser.setPhone(user.getPhone());
-            atomicReference.set(Optional.of(userMapper.fromUpdateUser(userRepo.save(foundUser))));
-        }, () -> {
-            atomicReference.set(Optional.empty());
-        });
+    @Transactional
+    public boolean downloadAvatar(int id, HttpServletResponse response) throws IOException {
+        User user = userRepo.findById(id).orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден!"));
+        if (user.getImage() != null){
+            filesService.downloadFile(response, user.getImage());
+            return true;
+        }
+        return false;
     }
+
+
+   private boolean checkPassword(NewPassword password){
+        return (password!= null && !password.getNewPassword().isEmpty() && !password.getNewPassword().isBlank()
+                && !password.getCurrentPassword().isEmpty() && !password.getCurrentPassword().isBlank());
+   }
+
+    private User getUser() {
+        return userRepo.findByEmail(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("Пользователя не существует!"));
+    }
+
+
 }

@@ -12,6 +12,13 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface AdMapper {
+
+    default Ads to(List<Ad> results) {
+        return to(results.get(0).getId(),results);
+    }
+
+    Ads to(Integer count, List<Ad> results);
+
     @Mapping(source = "user.id", target = "author")
     @Mapping(source = "id", target = "pk")
     AdDto toDto(Ad ad);
@@ -22,7 +29,7 @@ public interface AdMapper {
 
     CreateOrUpdateAd fromUpdateAd(Ad ad);
 
-    List<AdDto> adsToAd(List<Ad> ads);
+    Ad createAd(CreateOrUpdateAd create);
 
     @Mapping(source = "id",target = "pk")
     @Mapping(source = "user.firstName",target = "authorFirstName")

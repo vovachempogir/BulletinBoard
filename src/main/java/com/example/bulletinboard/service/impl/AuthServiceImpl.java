@@ -1,22 +1,22 @@
 package com.example.bulletinboard.service.impl;
 
 import com.example.bulletinboard.dto.Register;
+import com.example.bulletinboard.entity.User;
+import com.example.bulletinboard.repository.UserRepo;
 import com.example.bulletinboard.service.AuthService;
-import org.springframework.security.core.userdetails.User;
+import com.example.bulletinboard.service.UserMapper;
+import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
 @Service
+@AllArgsConstructor
 public class AuthServiceImpl implements AuthService {
     private final UserDetailsManager manager;
     private final PasswordEncoder encoder;
-
-    public AuthServiceImpl(UserDetailsManager manager,
-                           PasswordEncoder passwordEncoder) {
-        this.manager = manager;
-        this.encoder = passwordEncoder;
-    }
+    private final UserMapper userMapper;
+    private final UserRepo userRepo;
 
     @Override
     public boolean login(String userName, String password) {
@@ -32,13 +32,9 @@ public class AuthServiceImpl implements AuthService {
         if (manager.userExists(register.getUsername())) {
             return false;
         }
-        manager.createUser(
-                User.builder()
-                        .passwordEncoder(this.encoder::encode)
-                        .password(register.getPassword())
-                        .username(register.getUsername())
-                        .roles(register.getRole().name())
-                        .build());
+        User user = userMapper.toUser(register);
+        user.setPassword(encoder.encode(register.getPassword()));
+        userRepo.save(userMapper.toUser(register));
         return true;
     }
 }
