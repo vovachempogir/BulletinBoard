@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 
@@ -42,4 +43,10 @@ public class UserController {
     public byte[] updateImage(@RequestParam("image") MultipartFile image) throws IOException {
         return userService.updateImage(image);
     }
+
+    @GetMapping(value = "/image/{userId}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
+    public ResponseEntity<Boolean> downloadAvatar(@PathVariable int userId, HttpServletResponse response) throws IOException {
+        return ResponseEntity.ok(userService.downloadAvatar(userId, response));
+    }
+
 }

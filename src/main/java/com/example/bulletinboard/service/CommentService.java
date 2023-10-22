@@ -8,8 +8,7 @@ import java.util.Optional;
 
 public interface CommentService {
     CommentDto create(Integer adID, CreateOrUpdateComment comment);
-    CommentDto getCommentsByAdId(Integer id);
-    Comments getAll();
+    Comments getAll(Integer id);
     void delete(Integer adId, Integer commentId);
     void updateComment(Integer userId, CreateOrUpdateComment comment);
 

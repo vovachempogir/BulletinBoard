@@ -40,13 +40,9 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public CommentDto getCommentsByAdId(Integer id) {
-        return commentMapper.toDto(commentRepo.findById(id).orElseThrow(CommentNotFoundException::new));
-    }
-    @Override
-    public Comments getAll() {
+    public Comments getAll(Integer adId) {
         log.info("getAllComments");
-        return commentMapper.to(commentRepo.findAll());
+        return commentMapper.to(commentRepo.findAllByAd_Id(adId));
     }
 
     @Override

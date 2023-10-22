@@ -6,6 +6,7 @@ import com.example.bulletinboard.dto.CreateOrUpdateAd;
 import com.example.bulletinboard.entity.Ad;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -16,5 +17,8 @@ public interface AdService {
     byte[] updateImage(Integer id, MultipartFile image) throws IOException;
     Ads getAll();
     void updateAd(Integer adId, CreateOrUpdateAd createOrUpdateAd);
-    void deleteByID(Integer adId, Integer commentId) throws IOException;
+    Ads getAllByUser();
+    void deleteById(Integer id) throws IOException;
+    void downloadImage(Integer id, HttpServletResponse response) throws IOException;
+
 }

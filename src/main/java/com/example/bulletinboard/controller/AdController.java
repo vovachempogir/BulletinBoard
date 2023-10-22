@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @Api(tags = "Объявления")
@@ -43,10 +44,13 @@ public class AdController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer adId,
-                                       @PathVariable Integer commentId) throws IOException {
-        adService.deleteByID(adId,commentId);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Void> delete(@PathVariable Integer id){
+        try {
+            adService.deleteById(id);
+            return ResponseEntity.ok().build();
+        } catch (IOException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
     }
 
     @PatchMapping("/{id}")
@@ -58,13 +62,17 @@ public class AdController {
 
     @GetMapping("/me")
     public Ads getUsersAd() {
-        return new Ads();
+        return adService.getAllByUser();
     }
 
     @PatchMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public byte[] updateAdImage(@PathVariable Integer id,
                                 @RequestParam("image") MultipartFile image) throws IOException {
         return adService.updateImage(id, image);
+    }
 
+    @GetMapping(value = "/image/{adId}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
+    public void downloadAdImageFromDB(@PathVariable int adId, HttpServletResponse response) throws IOException {
+        adService.downloadImage(adId, response);
     }
 }

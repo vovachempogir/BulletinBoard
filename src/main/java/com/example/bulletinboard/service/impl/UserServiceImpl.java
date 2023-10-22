@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.file.Path;
 
@@ -75,6 +76,18 @@ public class UserServiceImpl implements UserService {
         return false;
     }
 
+    @Override
+    @Transactional
+    public boolean downloadAvatar(int id, HttpServletResponse response) throws IOException {
+        User user = userRepo.findById(id).orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден!"));
+        if (user.getImage() != null){
+            filesService.downloadFile(response, user.getImage());
+            return true;
+        }
+        return false;
+    }
+
+
    private boolean checkPassword(NewPassword password){
         return (password!= null && !password.getNewPassword().isEmpty() && !password.getNewPassword().isBlank()
                 && !password.getCurrentPassword().isEmpty() && !password.getCurrentPassword().isBlank());
@@ -83,4 +96,6 @@ public class UserServiceImpl implements UserService {
     private User getUser() {
         return userRepo.findByEmail(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("Пользователя не существует!"));
     }
+
+
 }

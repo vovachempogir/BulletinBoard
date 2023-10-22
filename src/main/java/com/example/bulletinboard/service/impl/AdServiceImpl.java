@@ -19,11 +19,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
@@ -84,14 +84,26 @@ public class AdServiceImpl implements AdService {
     }
 
     @Override
-    public void deleteByID(Integer adId, Integer commentId) throws IOException {
+    public Ads getAllByUser() {
+        return adMapper.to(adRepo.findAll());
+    }
+
+    @Override
+    public void deleteById(Integer id) throws IOException {
         User user = getUser();
-        Ad ad = adMapper.toAd(getById(adId));
+        Ad ad = getAdById(id);
         if (rightsVerification(user, ad)) {
-            commentRepo.deleteAllById(Collections.singleton(commentId));
-            adRepo.deleteById(adId);
+            adRepo.deleteById(id);
+            commentRepo.deleteAllByAd_Id(id);
             Files.deleteIfExists(Path.of(ad.getImage()));
         }
+    }
+
+    @Override
+    public void downloadImage(Integer id, HttpServletResponse response) throws IOException {
+        Ad ad  = getAdById(id);
+        String imagePath = ad.getImage();
+        filesService.downloadFile(response, imagePath);
     }
 
     private class AdNotFoundException extends RuntimeException {
@@ -106,6 +118,10 @@ public class AdServiceImpl implements AdService {
 
     private User getUser() {
         return userRepo.findByEmail(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+    }
+
+    private Ad getAdById(Integer id) {
+        return adRepo.findById(id).orElseThrow(() -> new NoSuchElementException("Объявление не найдено"));
     }
 
     private Path getPath(MultipartFile image) {

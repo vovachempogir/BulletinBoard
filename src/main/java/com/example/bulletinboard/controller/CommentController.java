@@ -20,15 +20,15 @@ public class CommentController {
     private final CommentService commentService;
 
     @PostMapping("/{id}/comments")
-    public ResponseEntity<CommentDto> create(@PathVariable Integer adId,
+    public ResponseEntity<CommentDto> create(@PathVariable Integer id,
                                              @RequestBody CreateOrUpdateComment comment) {
-        CommentDto commentDto = commentService.create(adId, comment);
+        CommentDto commentDto = commentService.create(id, comment);
         return ResponseEntity.ok(commentDto);
     }
 
     @GetMapping("/{id}/comments")
-    public CommentDto getCommentsByAdId(@PathVariable Integer id) {
-        return commentService.getCommentsByAdId(id);
+    public Comments getCommentsByAdId(@PathVariable Integer id) {
+        return commentService.getAll(id);
     }
     
 
