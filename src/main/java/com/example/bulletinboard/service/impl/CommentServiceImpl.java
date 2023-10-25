@@ -56,17 +56,16 @@ public class CommentServiceImpl implements CommentService {
             throw new UnsupportedOperationException("Нет прав на удаление комментария");
         }
     }
-    @Override
-    public void updateComment(Integer commentId , CreateOrUpdateComment comment) {
-        commentRepo.findById(commentId).map(foundComment -> {
-            foundComment.setText(comment.getText());
-            return commentMapper.fromUpdateComment(commentRepo.save(foundComment));
-        }).orElseThrow(CommentNotFoundException::new);
-    }
 
-    private class CommentNotFoundException extends RuntimeException {
-        public CommentNotFoundException() {
-            super("Комментарий не найден");
+    @Override
+    public CommentDto updateComment(Integer adId, Integer commentId, CreateOrUpdateComment updateComment) {
+        User user = getUser();
+        Ad ad = getAd(adId);
+        if (rightsVerification(user, ad)) {
+            Comment comment = commentRepo.findByIdAndAd_Id(commentId, adId);
+            return commentMapper.toDto(commentRepo.save(comment));
+        } else {
+            throw new UnsupportedOperationException("Нет прав на изменение комментария");
         }
     }
 

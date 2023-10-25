@@ -16,9 +16,8 @@ public interface AdService {
     AdDto getById(Integer id);
     byte[] updateImage(Integer id, MultipartFile image) throws IOException;
     Ads getAll();
+    Ads getAllByUserName();
     void updateAd(Integer adId, CreateOrUpdateAd createOrUpdateAd);
-    Ads getAllByUser();
     void deleteById(Integer id) throws IOException;
     void downloadImage(Integer id, HttpServletResponse response) throws IOException;
-
 }

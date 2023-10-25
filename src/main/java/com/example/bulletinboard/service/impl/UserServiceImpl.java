@@ -19,22 +19,19 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
-
-
 
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-
     private final UserRepo userRepo;
     private final UserMapper userMapper;
     private final UserDetailsManager userDetailsManager;
     private final UserDetails userDetails;
     private final FilesService filesService;
-
 
     @Value("${upload.path.user}")
     private String uploadPath;
@@ -50,10 +47,12 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public byte[] updateImage(MultipartFile image) throws IOException {
         User user = getUser();
-        Path path = Path.of(uploadPath, image.getOriginalFilename());
+        if (user.getImage() != null){
+            Files.deleteIfExists(Path.of(user.getImage()));
+        }
+        Path path = getPath(image, user);
         filesService.uploadFile(image, path);
         user.setImage(path.toAbsolutePath().toString());
-        log.info("updateImageUser");
         userRepo.save(user);
         return image.getBytes();
     }
@@ -77,7 +76,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional
     public boolean downloadAvatar(int id, HttpServletResponse response) throws IOException {
         User user = userRepo.findById(id).orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден!"));
         if (user.getImage() != null){
@@ -97,5 +95,8 @@ public class UserServiceImpl implements UserService {
         return userRepo.findByEmail(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("Пользователя не существует!"));
     }
 
+    private Path getPath(MultipartFile image, User user){
+        return Path.of(uploadPath, "user_" + user.getId() + "_" + image.getOriginalFilename());
+    }
 
 }

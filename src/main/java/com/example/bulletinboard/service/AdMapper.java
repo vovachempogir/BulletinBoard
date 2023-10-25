@@ -14,7 +14,7 @@ import java.util.List;
 public interface AdMapper {
 
     default Ads to(List<Ad> results) {
-        return to(results.get(0).getId(),results);
+        return to(results.size(), results);
     }
 
     Ads to(Integer count, List<Ad> results);

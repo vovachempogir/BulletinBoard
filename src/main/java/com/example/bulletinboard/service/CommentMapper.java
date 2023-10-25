@@ -13,7 +13,7 @@ import java.util.List;
 public interface CommentMapper  {
 
     default Comments to(List<Comment> results) {
-        return to(results.get(0).getId(),results);
+        return to(results.size(),results);
     }
 
     Comments to(Integer count, List<Comment> results);

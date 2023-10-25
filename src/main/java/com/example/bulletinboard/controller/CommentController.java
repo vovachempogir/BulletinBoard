@@ -20,10 +20,8 @@ public class CommentController {
     private final CommentService commentService;
 
     @PostMapping("/{id}/comments")
-    public ResponseEntity<CommentDto> create(@PathVariable Integer id,
-                                             @RequestBody CreateOrUpdateComment comment) {
-        CommentDto commentDto = commentService.create(id, comment);
-        return ResponseEntity.ok(commentDto);
+    public CommentDto create(@PathVariable Integer id, @RequestBody CreateOrUpdateComment comment) {
+        return commentService.create(id, comment);
     }
 
     @GetMapping("/{id}/comments")
@@ -33,16 +31,13 @@ public class CommentController {
     
 
     @DeleteMapping("/{adId}/comments/{commentId}")
-    public ResponseEntity<Void> delete(@PathVariable Integer adId,
-                                       @PathVariable Integer commentId) {
+    public void delete(@PathVariable Integer adId, @PathVariable Integer commentId) {
         commentService.delete(adId, commentId);
-        return ResponseEntity.ok().build();
     }
 
     @PatchMapping("/{adId}/comments/{commentId}")
-    public ResponseEntity<CreateOrUpdateComment> update(@PathVariable Integer commentId, @RequestBody CreateOrUpdateComment comment) {
-        commentService.updateComment(commentId, comment);
-        return ResponseEntity.ok().build();
+    public CommentDto update(@PathVariable Integer adId, @PathVariable Integer commentId, @RequestBody CreateOrUpdateComment comment) {
+        return commentService.updateComment(adId, commentId, comment);
     }
 
 

@@ -62,7 +62,7 @@ public class AdController {
 
     @GetMapping("/me")
     public Ads getUsersAd() {
-        return adService.getAllByUser();
+        return adService.getAllByUserName();
     }
 
     @PatchMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -72,7 +72,7 @@ public class AdController {
     }
 
     @GetMapping(value = "/image/{adId}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
-    public void downloadAdImageFromDB(@PathVariable int adId, HttpServletResponse response) throws IOException {
+    public void downloadAdImageFromDB(@PathVariable Integer adId, HttpServletResponse response) throws IOException {
         adService.downloadImage(adId, response);
     }
 }

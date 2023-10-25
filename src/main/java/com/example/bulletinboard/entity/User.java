@@ -2,6 +2,10 @@ package com.example.bulletinboard.entity;
 
 import com.example.bulletinboard.dto.Role;
 import lombok.*;
+import org.hibernate.engine.internal.Cascade;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Primary;
+
 import javax.persistence.*;
 @Data
 @NoArgsConstructor

@@ -10,6 +10,6 @@ public interface CommentService {
     CommentDto create(Integer adID, CreateOrUpdateComment comment);
     Comments getAll(Integer id);
     void delete(Integer adId, Integer commentId);
-    void updateComment(Integer userId, CreateOrUpdateComment comment);
+    CommentDto updateComment(Integer adId, Integer commentId, CreateOrUpdateComment updateComment);
 
 }

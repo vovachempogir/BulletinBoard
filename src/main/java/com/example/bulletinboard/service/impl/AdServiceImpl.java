@@ -19,11 +19,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.persistence.EntityNotFoundException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.NoSuchElementException;
 
 @Service
@@ -58,9 +58,9 @@ public class AdServiceImpl implements AdService {
 
     @Override
     public byte[] updateImage(Integer id, MultipartFile image) throws IOException {
-        Ad ad = adRepo.findById(id).orElseThrow(AdNotFoundException::new);
-        if (ad.getImage() != null) {
-            Files.exists(Path.of(ad.getImage()));
+        Ad ad = adRepo.findById(id).orElseThrow(() -> new EntityNotFoundException("Объявление не найдено"));
+        if (ad.getImage()!=null){
+            Files.deleteIfExists(Path.of(ad.getImage()));
         }
         loadImage(ad, image);
         adRepo.save(ad);
@@ -74,18 +74,25 @@ public class AdServiceImpl implements AdService {
     }
 
     @Override
-    public void updateAd(Integer adId, CreateOrUpdateAd ad) {
-        adRepo.findById(adId).map(foundAd -> {
-            foundAd.setTitle(ad.getTitle());
-            foundAd.setPrice(ad.getPrice());
-            foundAd.setDescription(ad.getDescription());
-            return adMapper.fromUpdateAd(adRepo.save(foundAd));
-        }).orElseThrow(() -> new AdNotFoundException());
+    public Ads getAllByUserName() {
+        User user = getUser();
+        return adMapper.to(adRepo.findAllByUserEmail(user.getEmail()));
     }
 
     @Override
-    public Ads getAllByUser() {
-        return adMapper.to(adRepo.findAll());
+    public void updateAd(Integer adId, CreateOrUpdateAd ad) {
+        User user = getUser();
+        Ad ad1 = getAdById(adId);
+        adRepo.findById(adId).map(foundAd -> {
+            if (rightsVerification(user, ad1)) {
+                foundAd.setTitle(ad.getTitle());
+                foundAd.setPrice(ad.getPrice());
+                foundAd.setDescription(ad.getDescription());
+                return adMapper.fromUpdateAd(adRepo.save(foundAd));
+            }else {
+                throw new UnsupportedOperationException("Нет прав на изменение комментария");
+            }
+        }).orElseThrow(() -> new AdNotFoundException());
     }
 
     @Override
@@ -124,13 +131,14 @@ public class AdServiceImpl implements AdService {
         return adRepo.findById(id).orElseThrow(() -> new NoSuchElementException("Объявление не найдено"));
     }
 
-    private Path getPath(MultipartFile image) {
-        return Path.of(uploadPath, image.getOriginalFilename());
-    }
-
     private void loadImage(Ad ad, MultipartFile image) throws IOException {
         Path path = getPath(image);
         filesService.uploadFile(image, path);
         ad.setImage(path.toAbsolutePath().toString());
     }
+
+    private Path getPath(MultipartFile image) {
+        return Path.of(uploadPath, image.getOriginalFilename());
+    }
+
 }
