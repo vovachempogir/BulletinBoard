@@ -37,6 +37,8 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    @Column
-    private String image;
+    @OneToOne
+    @ToString.Exclude
+    @JoinColumn(name = "image_id", referencedColumnName = "id")
+    private Image image;
 }

@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.NoSuchElementException;
 
@@ -28,6 +29,7 @@ public class CommentServiceImpl implements CommentService {
     private final UserDetails userDetails;
 
     @Override
+    @Transactional
     public CommentDto create(Integer adId, CreateOrUpdateComment createComment) {
         Ad ad = getAd(adId);
         User user = getUser();
@@ -40,16 +42,18 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional
     public Comments getAll(Integer adId) {
         log.info("getAllComments");
         return commentMapper.to(commentRepo.findAllByAd_Id(adId));
     }
 
     @Override
+    @Transactional
     public void delete(Integer adId, Integer commentId) {
         User user = getUser();
         Ad ad = getAd(adId);
-        Comment comment = commentRepo.deleteCommentByIdAndAd_Id(adId, commentId);
+        Comment comment = commentRepo.findByIdAndAd_Id(commentId, adId);
         if (rightsVerification(user, ad)) {
             commentRepo.delete(comment);
         } else {
@@ -58,6 +62,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional
     public CommentDto updateComment(Integer adId, Integer commentId, CreateOrUpdateComment updateComment) {
         User user = getUser();
         Ad ad = getAd(adId);

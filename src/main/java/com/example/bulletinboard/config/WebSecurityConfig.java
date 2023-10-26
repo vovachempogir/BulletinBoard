@@ -2,6 +2,7 @@ package com.example.bulletinboard.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -18,7 +19,10 @@ public class WebSecurityConfig {
             "/v3/api-docs",
             "/webjars/**",
             "/login",
-            "/register"
+            "/register",
+            "/ads/**",
+            "/users/image/**",
+            "/ads/image/**"
     };
 
     @Bean
@@ -30,13 +34,11 @@ public class WebSecurityConfig {
                                 authorization
                                         .mvcMatchers(AUTH_WHITELIST)
                                         .permitAll()
-                                        .mvcMatchers("/ads/**", "/users/**", "/ads/image/**", "/users/image/**")
+                                        .mvcMatchers("/ads/**", "/users/**")
                                         .authenticated())
                 .cors()
                 .and()
-                .httpBasic(withDefaults())
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS);;
+                .httpBasic(withDefaults());
         return http.build();
     }
 

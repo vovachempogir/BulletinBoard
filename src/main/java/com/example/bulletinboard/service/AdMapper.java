@@ -5,8 +5,11 @@ import com.example.bulletinboard.dto.Ads;
 import com.example.bulletinboard.dto.CreateOrUpdateAd;
 import com.example.bulletinboard.dto.ExtendedAd;
 import com.example.bulletinboard.entity.Ad;
+import com.example.bulletinboard.entity.Image;
+import com.example.bulletinboard.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 
 import java.util.List;
 
@@ -19,22 +22,29 @@ public interface AdMapper {
 
     Ads to(Integer count, List<Ad> results);
 
-    @Mapping(source = "user.id", target = "author")
+    @Mapping(source = "user", target = "author", qualifiedByName = "authorToInt")
+    @Mapping(target = "image", source = "image", qualifiedByName = "imageToPathString")
     @Mapping(source = "id", target = "pk")
     AdDto toDto(Ad ad);
-
-    @Mapping(source = "author", target = "user.id")
-    @Mapping(source = "pk", target = "id")
-    Ad toAd(AdDto adDto);
 
     CreateOrUpdateAd fromUpdateAd(Ad ad);
 
     Ad createAd(CreateOrUpdateAd create);
 
-    @Mapping(source = "id",target = "pk")
-    @Mapping(source = "user.firstName",target = "authorFirstName")
-    @Mapping(source = "user.lastName",target = "authorLastName")
-    @Mapping(source = "user.email",target = "email")
-    @Mapping(source = "user.phone",target = "phone")
-    ExtendedAd toExtendAd(Ad ad);
+//    @Mapping(source = "id",target = "pk")
+//    @Mapping(source = "user.firstName",target = "authorFirstName")
+//    @Mapping(source = "user.lastName",target = "authorLastName")
+//    @Mapping(source = "user.email",target = "email")
+//    @Mapping(source = "user.phone",target = "phone")
+//    ExtendedAd toExtendAd(Ad ad);
+
+    @Named("imageToPathString")
+    default String imageToPathString(Image image) {
+        return "/ads/image/" + image.getId();
+    }
+
+    @Named("authorToInt")
+    default Integer authorToInt(User user) {
+        return user.getId();
+    }
 }

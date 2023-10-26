@@ -14,10 +14,9 @@ import java.util.Optional;
 public interface AdService {
     AdDto create(CreateOrUpdateAd ad, MultipartFile image) throws IOException;
     AdDto getById(Integer id);
-    byte[] updateImage(Integer id, MultipartFile image) throws IOException;
+    void updateImage(Integer id, MultipartFile image) throws IOException;
     Ads getAll();
     Ads getAllByUserName();
     void updateAd(Integer adId, CreateOrUpdateAd createOrUpdateAd);
-    void deleteById(Integer id) throws IOException;
-    void downloadImage(Integer id, HttpServletResponse response) throws IOException;
+    void deleteById(Integer id);
 }
