@@ -14,6 +14,6 @@ public class CreateOrUpdateAd {
     @Size(max = 10000000)
     private Integer price;
 
-    @Length(min = 8, max = 64)
+    @Length(min = 8, max = 1000000)
     private String description;
 }

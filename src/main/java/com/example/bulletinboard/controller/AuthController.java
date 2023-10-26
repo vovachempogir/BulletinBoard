@@ -38,7 +38,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Register register) {
-        if (!authUserManager.userExists(register.getUsername())) {
+        if (!authService.register(register)) {
             userRepo.save(userMapper.toUser(register));
             return ResponseEntity.status(HttpStatus.CREATED).build();
         } else {
