@@ -31,12 +31,13 @@ public interface AdMapper {
 
     Ad createAd(CreateOrUpdateAd create);
 
-//    @Mapping(source = "id",target = "pk")
-//    @Mapping(source = "user.firstName",target = "authorFirstName")
-//    @Mapping(source = "user.lastName",target = "authorLastName")
-//    @Mapping(source = "user.email",target = "email")
-//    @Mapping(source = "user.phone",target = "phone")
-//    ExtendedAd toExtendAd(Ad ad);
+    @Mapping(source = "id",target = "pk")
+    @Mapping(source = "user.firstName",target = "authorFirstName")
+    @Mapping(source = "user.lastName",target = "authorLastName")
+    @Mapping(source = "user.email",target = "email")
+    @Mapping(source = "user.phone",target = "phone")
+    @Mapping(target = "image", source = "image", qualifiedByName = "imageToPathString")
+    ExtendedAd toExtendAd(Ad ad);
 
     @Named("imageToPathString")
     default String imageToPathString(Image image) {

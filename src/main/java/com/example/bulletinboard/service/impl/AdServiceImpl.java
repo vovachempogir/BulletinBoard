@@ -1,9 +1,6 @@
 package com.example.bulletinboard.service.impl;
 
-import com.example.bulletinboard.dto.AdDto;
-import com.example.bulletinboard.dto.Ads;
-import com.example.bulletinboard.dto.CreateOrUpdateAd;
-import com.example.bulletinboard.dto.Role;
+import com.example.bulletinboard.dto.*;
 import com.example.bulletinboard.entity.Ad;
 import com.example.bulletinboard.entity.User;
 import com.example.bulletinboard.repository.AdRepo;
@@ -106,6 +103,12 @@ public class AdServiceImpl implements AdService {
             commentRepo.deleteAllByAd_Id(id);
             imageRepo.deleteById(ad.getImage().getId());
         }
+    }
+
+    @Override
+    @Transactional
+    public ExtendedAd getAdFullInfo(Integer id) {
+        return adMapper.toExtendAd(getAdById(id));
     }
 
     private class AdNotFoundException extends RuntimeException {

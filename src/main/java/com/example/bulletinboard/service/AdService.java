@@ -3,6 +3,7 @@ package com.example.bulletinboard.service;
 import com.example.bulletinboard.dto.AdDto;
 import com.example.bulletinboard.dto.Ads;
 import com.example.bulletinboard.dto.CreateOrUpdateAd;
+import com.example.bulletinboard.dto.ExtendedAd;
 import com.example.bulletinboard.entity.Ad;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,4 +20,6 @@ public interface AdService {
     Ads getAllByUserName();
     void updateAd(Integer adId, CreateOrUpdateAd createOrUpdateAd);
     void deleteById(Integer id);
+
+    ExtendedAd getAdFullInfo(Integer id);
 }
