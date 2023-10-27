@@ -3,6 +3,7 @@ package com.example.bulletinboard.service.impl;
 import com.example.bulletinboard.dto.*;
 import com.example.bulletinboard.entity.Ad;
 import com.example.bulletinboard.entity.User;
+import com.example.bulletinboard.exception.AdNotFoundException;
 import com.example.bulletinboard.repository.AdRepo;
 import com.example.bulletinboard.repository.CommentRepo;
 import com.example.bulletinboard.repository.ImageRepo;
@@ -21,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.persistence.EntityNotFoundException;
 import java.io.*;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -99,8 +101,8 @@ public class AdServiceImpl implements AdService {
         User user = getUser();
         Ad ad = getAdById(id);
         if (rightsVerification(user, ad)) {
+            commentRepo.deleteAllByAdId(ad.getId());
             adRepo.deleteById(id);
-            commentRepo.deleteAllByAd_Id(id);
             imageRepo.deleteById(ad.getImage().getId());
         }
     }
@@ -109,12 +111,6 @@ public class AdServiceImpl implements AdService {
     @Transactional
     public ExtendedAd getAdFullInfo(Integer id) {
         return adMapper.toExtendAd(getAdById(id));
-    }
-
-    private class AdNotFoundException extends RuntimeException {
-        public AdNotFoundException() {
-            super("Объявление не существует");
-        }
     }
 
     private boolean rightsVerification(User user, Ad ad) {
@@ -128,5 +124,4 @@ public class AdServiceImpl implements AdService {
     private Ad getAdById(Integer id) {
         return adRepo.findById(id).orElseThrow(() -> new NoSuchElementException("Объявление не найдено"));
     }
-
 }

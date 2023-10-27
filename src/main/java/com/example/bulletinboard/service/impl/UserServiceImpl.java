@@ -44,7 +44,7 @@ public class UserServiceImpl implements UserService {
         User user = getUser();
         user.setImage(imageService.upload(image));
         userRepo.save(user);
-        log.debug("User avatar with id - {} was update", user.getId());
+        log.info("User avatar with id - {} was update", user.getId());
     }
 
     @Override
@@ -52,10 +52,14 @@ public class UserServiceImpl implements UserService {
     public UserDto updateUser(CreateOrUpdateUser updateUser) {
         log.info("updateUser");
         User user = getUser();
+        user.setFirstName(updateUser.getFirstName());
+        user.setLastName(updateUser.getLastName());
+        user.setPhone(updateUser.getPhone());
         return userMapper.toDto(userRepo.save(user));
     }
 
     @Override
+    @Transactional
     public boolean updatePassword(NewPassword newPassword) {
         if (checkPassword(newPassword)){
             userDetailsManager.changePassword(newPassword.getCurrentPassword(), newPassword.getNewPassword());

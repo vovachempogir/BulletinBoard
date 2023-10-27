@@ -24,6 +24,7 @@ public interface CommentMapper  {
     @Mapping(target = "author", source = "user", qualifiedByName = "authorToInteger")
     @Mapping(target = "authorFirstName", source = "user", qualifiedByName = "authorFirstNameFromAuthor")
     @Mapping(target = "authorImage", source = "user", qualifiedByName = "authorImageToString")
+    @Mapping(target = "pk", source = "id")
     CommentDto toDto(Comment comment);
 
     @Mapping(target = "createdAt", expression = "java(Instant.ofEpochMilli(Instant.now().toEpochMilli()))")
