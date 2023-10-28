@@ -95,6 +95,6 @@ public class CommentServiceImpl implements CommentService {
     }
 
     private boolean rightsVerification(User user, Comment comment) {
-        return (user.getRole().equals(Role.ADMIN)|| comment.getUser().equals(comment));
+        return (user.getRole().equals(Role.ADMIN) || comment.getUser().equals(comment.getUser()));
     }
 }
