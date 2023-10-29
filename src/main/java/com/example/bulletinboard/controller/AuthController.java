@@ -5,7 +5,6 @@ import com.example.bulletinboard.dto.Register;
 import com.example.bulletinboard.repository.UserRepo;
 import com.example.bulletinboard.security.AuthUserManager;
 import com.example.bulletinboard.service.AuthService;
-import com.example.bulletinboard.service.AuthUserMapper;
 import com.example.bulletinboard.service.UserMapper;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +38,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Register register) {
-        if (!authUserManager.userExists(register.getUsername())) {
+        if (!authService.register(register)) {
             userRepo.save(userMapper.toUser(register));
             return ResponseEntity.status(HttpStatus.CREATED).build();
         } else {

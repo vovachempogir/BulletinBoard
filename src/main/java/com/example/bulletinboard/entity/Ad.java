@@ -13,8 +13,10 @@ public class Ad {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false)
-    private String image;
+    @OneToOne
+    @ToString.Exclude
+    @JoinColumn(name = "image_id", referencedColumnName = "id")
+    private Image image;
 
     @Column(nullable = false)
     private Integer price;

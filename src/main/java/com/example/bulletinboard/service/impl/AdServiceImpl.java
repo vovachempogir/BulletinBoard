@@ -1,30 +1,28 @@
 package com.example.bulletinboard.service.impl;
 
-import com.example.bulletinboard.dto.AdDto;
-import com.example.bulletinboard.dto.Ads;
-import com.example.bulletinboard.dto.CreateOrUpdateAd;
-import com.example.bulletinboard.dto.Role;
+import com.example.bulletinboard.dto.*;
 import com.example.bulletinboard.entity.Ad;
 import com.example.bulletinboard.entity.User;
+import com.example.bulletinboard.exception.AdNotFoundException;
 import com.example.bulletinboard.repository.AdRepo;
 import com.example.bulletinboard.repository.CommentRepo;
+import com.example.bulletinboard.repository.ImageRepo;
 import com.example.bulletinboard.repository.UserRepo;
 import com.example.bulletinboard.service.AdMapper;
 import com.example.bulletinboard.service.AdService;
+import com.example.bulletinboard.service.ImageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletResponse;
+import javax.persistence.EntityNotFoundException;
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -32,84 +30,87 @@ import java.util.NoSuchElementException;
 public class AdServiceImpl implements AdService {
     private final AdRepo adRepo;
     private final CommentRepo commentRepo;
-    private final AdMapper adMapper;
     private final UserRepo userRepo;
+    private final ImageRepo imageRepo;
+    private final AdMapper adMapper;
     private final UserDetails userDetails;
-    private final FilesService filesService;
-    @Value("${upload.path.ad}")
-    private String uploadPath;
+    private final ImageService imageService;
 
     @Override
+    @Transactional
     public AdDto create(CreateOrUpdateAd createAd, MultipartFile image) throws IOException {
         Ad ad = adMapper.createAd(createAd);
         User user = getUser();
         ad.setUser(user);
-        loadImage(ad, image);
+        ad.setImage(imageService.upload(image));
         adRepo.save(ad);
         log.info("createAd");
         return adMapper.toDto(ad);
     }
 
     @Override
+    @Transactional
     public AdDto getById(Integer id) {
         log.info("getAd");
         return adMapper.toDto(adRepo.findById(id).orElseThrow(AdNotFoundException::new));
     }
 
     @Override
-    public byte[] updateImage(Integer id, MultipartFile image) throws IOException {
-        Ad ad = adRepo.findById(id).orElseThrow(AdNotFoundException::new);
-        if (ad.getImage() != null) {
-            Files.exists(Path.of(ad.getImage()));
-        }
-        loadImage(ad, image);
+    @Transactional
+    public void updateImage(Integer id, MultipartFile image) throws IOException {
+        Ad ad = adRepo.findById(id).orElseThrow(() -> new EntityNotFoundException("Объявление не найдено"));
+        imageRepo.delete(ad.getImage());
+        ad.setImage(imageService.upload(image));
         adRepo.save(ad);
-        return image.getBytes();
+        log.info("Update image ad with id - {}", id);
     }
 
     @Override
+    @Transactional
     public Ads getAll() {
         log.info("getAllAdd");
         return adMapper.to(adRepo.findAll());
     }
 
     @Override
+    @Transactional
+    public Ads getAllByUserName() {
+        User user = getUser();
+        return adMapper.to(adRepo.findAllByUserEmail(user.getEmail()));
+    }
+
+    @Override
+    @Transactional
     public void updateAd(Integer adId, CreateOrUpdateAd ad) {
+        User user = getUser();
         adRepo.findById(adId).map(foundAd -> {
-            foundAd.setTitle(ad.getTitle());
-            foundAd.setPrice(ad.getPrice());
-            foundAd.setDescription(ad.getDescription());
-            return adMapper.fromUpdateAd(adRepo.save(foundAd));
+            if (rightsVerification(user, foundAd)) {
+                foundAd.setTitle(ad.getTitle());
+                foundAd.setPrice(ad.getPrice());
+                foundAd.setDescription(ad.getDescription());
+                return adMapper.fromUpdateAd(adRepo.save(foundAd));
+            }else {
+                throw new UnsupportedOperationException("Нет прав на изменение комментария");
+            }
         }).orElseThrow(() -> new AdNotFoundException());
     }
 
     @Override
-    public Ads getAllByUser() {
-        return adMapper.to(adRepo.findAll());
-    }
-
-    @Override
-    public void deleteById(Integer id) throws IOException {
+    @Transactional
+    public void deleteById(Integer id){
         User user = getUser();
         Ad ad = getAdById(id);
         if (rightsVerification(user, ad)) {
+            commentRepo.deleteAllByAdId(ad.getId());
             adRepo.deleteById(id);
-            commentRepo.deleteAllByAd_Id(id);
-            Files.deleteIfExists(Path.of(ad.getImage()));
+            imageRepo.deleteById(ad.getImage().getId());
         }
     }
 
     @Override
-    public void downloadImage(Integer id, HttpServletResponse response) throws IOException {
-        Ad ad  = getAdById(id);
-        String imagePath = ad.getImage();
-        filesService.downloadFile(response, imagePath);
-    }
-
-    private class AdNotFoundException extends RuntimeException {
-        public AdNotFoundException() {
-            super("Объявление не существует");
-        }
+    @Transactional
+    public ExtendedAd getAdFullInfo(Integer id) {
+        return adMapper.toExtendAd(getAdById(id));
     }
 
     private boolean rightsVerification(User user, Ad ad) {
@@ -117,20 +118,10 @@ public class AdServiceImpl implements AdService {
     }
 
     private User getUser() {
-        return userRepo.findByEmail(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+        return userRepo.findByEmail(userDetails.getUsername()).orElseThrow(()-> new UsernameNotFoundException("Такого пользователя не существует"));
     }
 
     private Ad getAdById(Integer id) {
         return adRepo.findById(id).orElseThrow(() -> new NoSuchElementException("Объявление не найдено"));
-    }
-
-    private Path getPath(MultipartFile image) {
-        return Path.of(uploadPath, image.getOriginalFilename());
-    }
-
-    private void loadImage(Ad ad, MultipartFile image) throws IOException {
-        Path path = getPath(image);
-        filesService.uploadFile(image, path);
-        ad.setImage(path.toAbsolutePath().toString());
     }
 }

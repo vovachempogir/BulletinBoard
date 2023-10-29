@@ -3,7 +3,9 @@ package com.example.bulletinboard.controller;
 import com.example.bulletinboard.dto.AdDto;
 import com.example.bulletinboard.dto.Ads;
 import com.example.bulletinboard.dto.CreateOrUpdateAd;
+import com.example.bulletinboard.dto.ExtendedAd;
 import com.example.bulletinboard.service.AdService;
+import com.example.bulletinboard.service.ImageService;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,7 @@ import java.io.IOException;
 public class AdController {
 
     private final AdService adService;
+    private final ImageService imageService;
 
     @GetMapping()
     public Ads getAllAds() {
@@ -38,19 +41,14 @@ public class AdController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AdDto> getAdById(@PathVariable Integer id) {
-        AdDto ad = adService.getById(id);
-        return ResponseEntity.ok(ad);
+    public ResponseEntity<ExtendedAd> getAdInfo(@PathVariable("id") Integer id) {
+        return ResponseEntity.ok(adService.getAdFullInfo(id));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Integer id){
-        try {
-            adService.deleteById(id);
-            return ResponseEntity.ok().build();
-        } catch (IOException e){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+        adService.deleteById(id);
+        return ResponseEntity.ok().build();
     }
 
     @PatchMapping("/{id}")
@@ -62,17 +60,18 @@ public class AdController {
 
     @GetMapping("/me")
     public Ads getUsersAd() {
-        return adService.getAllByUser();
+        return adService.getAllByUserName();
     }
 
     @PatchMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public byte[] updateAdImage(@PathVariable Integer id,
+    public ResponseEntity<String> updateAdImage(@PathVariable Integer id,
                                 @RequestParam("image") MultipartFile image) throws IOException {
-        return adService.updateImage(id, image);
+        adService.updateImage(id, image);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping(value = "/image/{adId}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
-    public void downloadAdImageFromDB(@PathVariable int adId, HttpServletResponse response) throws IOException {
-        adService.downloadImage(adId, response);
+    public ResponseEntity<byte[]> getImage(@PathVariable int adId) {
+        return ResponseEntity.ok(imageService.getImage(adId));
     }
 }

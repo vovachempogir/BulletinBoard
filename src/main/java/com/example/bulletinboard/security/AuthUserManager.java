@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
@@ -54,8 +55,9 @@ public class AuthUserManager implements UserDetailsManager {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepo.findByEmail(username).orElseThrow(() -> new UsernameNotFoundException("Такого пользователя не существует"));
+    @Transactional
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = userRepo.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("Такого пользователя не существует"));
         AuthUserDto authUserDto = authUserMapper.toAuthUser(user);
         authUser.setUser(authUserDto);
         return authUser;

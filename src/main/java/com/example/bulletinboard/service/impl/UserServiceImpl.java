@@ -4,12 +4,13 @@ import com.example.bulletinboard.dto.CreateOrUpdateUser;
 import com.example.bulletinboard.dto.NewPassword;
 import com.example.bulletinboard.dto.UserDto;
 import com.example.bulletinboard.entity.User;
+import com.example.bulletinboard.repository.ImageRepo;
 import com.example.bulletinboard.repository.UserRepo;
+import com.example.bulletinboard.service.ImageService;
 import com.example.bulletinboard.service.UserMapper;
 import com.example.bulletinboard.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.provisioning.UserDetailsManager;
@@ -17,29 +18,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.nio.file.Path;
-
-
 
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-
     private final UserRepo userRepo;
+    private final ImageRepo imageRepo;
     private final UserMapper userMapper;
     private final UserDetailsManager userDetailsManager;
     private final UserDetails userDetails;
-    private final FilesService filesService;
-
-
-    @Value("${upload.path.user}")
-    private String uploadPath;
+    private final ImageService imageService;
 
     @Override
+    @Transactional
     public UserDto getInfoAboutUser() {
         log.info("getUser");
         User user = getUser();
@@ -48,24 +42,27 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public byte[] updateImage(MultipartFile image) throws IOException {
+    public void updateImage(MultipartFile image) throws IOException {
         User user = getUser();
-        Path path = Path.of(uploadPath, image.getOriginalFilename());
-        filesService.uploadFile(image, path);
-        user.setImage(path.toAbsolutePath().toString());
-        log.info("updateImageUser");
+        imageRepo.delete(user.getImage());
+        user.setImage(imageService.upload(image));
         userRepo.save(user);
-        return image.getBytes();
+        log.info("User avatar with id - {} was update", user.getId());
     }
 
     @Override
+    @Transactional
     public UserDto updateUser(CreateOrUpdateUser updateUser) {
         log.info("updateUser");
         User user = getUser();
+        user.setFirstName(updateUser.getFirstName());
+        user.setLastName(updateUser.getLastName());
+        user.setPhone(updateUser.getPhone());
         return userMapper.toDto(userRepo.save(user));
     }
 
     @Override
+    @Transactional
     public boolean updatePassword(NewPassword newPassword) {
         if (checkPassword(newPassword)){
             userDetailsManager.changePassword(newPassword.getCurrentPassword(), newPassword.getNewPassword());
@@ -76,26 +73,13 @@ public class UserServiceImpl implements UserService {
         return false;
     }
 
-    @Override
-    @Transactional
-    public boolean downloadAvatar(int id, HttpServletResponse response) throws IOException {
-        User user = userRepo.findById(id).orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден!"));
-        if (user.getImage() != null){
-            filesService.downloadFile(response, user.getImage());
-            return true;
-        }
-        return false;
-    }
-
-
    private boolean checkPassword(NewPassword password){
         return (password!= null && !password.getNewPassword().isEmpty() && !password.getNewPassword().isBlank()
                 && !password.getCurrentPassword().isEmpty() && !password.getCurrentPassword().isBlank());
    }
 
     private User getUser() {
-        return userRepo.findByEmail(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("Пользователя не существует!"));
+        return userRepo.findByEmail(userDetails.getUsername()).orElseThrow(()-> new UsernameNotFoundException("Такого пользователя не существует"));
     }
-
 
 }

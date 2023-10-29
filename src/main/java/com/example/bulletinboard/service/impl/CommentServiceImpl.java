@@ -14,7 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.NoSuchElementException;
 
 @Service
@@ -28,6 +30,7 @@ public class CommentServiceImpl implements CommentService {
     private final UserDetails userDetails;
 
     @Override
+    @Transactional
     public CommentDto create(Integer adId, CreateOrUpdateComment createComment) {
         Ad ad = getAd(adId);
         User user = getUser();
@@ -40,33 +43,39 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional
     public Comments getAll(Integer adId) {
         log.info("getAllComments");
         return commentMapper.to(commentRepo.findAllByAd_Id(adId));
     }
 
     @Override
+    @Transactional
     public void delete(Integer adId, Integer commentId) {
         User user = getUser();
-        Ad ad = getAd(adId);
-        Comment comment = commentRepo.deleteCommentByIdAndAd_Id(adId, commentId);
-        if (rightsVerification(user, ad)) {
+        Comment comment = getComment(commentId);
+        if (rightsVerification(user, comment)) {
             commentRepo.delete(comment);
+            log.info("deleteComment");
         } else {
+            log.info("notDeleteComment");
             throw new UnsupportedOperationException("Нет прав на удаление комментария");
         }
     }
-    @Override
-    public void updateComment(Integer commentId , CreateOrUpdateComment comment) {
-        commentRepo.findById(commentId).map(foundComment -> {
-            foundComment.setText(comment.getText());
-            return commentMapper.fromUpdateComment(commentRepo.save(foundComment));
-        }).orElseThrow(CommentNotFoundException::new);
-    }
 
-    private class CommentNotFoundException extends RuntimeException {
-        public CommentNotFoundException() {
-            super("Комментарий не найден");
+    @Override
+    @Transactional
+    public CommentDto updateComment(Integer adId, Integer commentId, CreateOrUpdateComment updateComment) {
+        User user = getUser();
+        Comment comment = getComment(commentId);
+        Ad ad = getAd(adId);
+        if (rightsVerification(user, comment)) {
+            comment.setText(updateComment.getText());
+            log.info("updateComment");
+            return commentMapper.toDto(commentRepo.save(comment));
+        } else {
+            log.info("notUpdateComment");
+            throw new UnsupportedOperationException("Нет прав на изменение комментария");
         }
     }
 
@@ -78,7 +87,11 @@ public class CommentServiceImpl implements CommentService {
         return userRepo.findByEmail(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
     }
 
-    private boolean rightsVerification(User user, Ad ad) {
-        return (user.getRole().equals(Role.ADMIN) || ad.getUser().equals(user));
+    private Comment getComment(Integer id) {
+        return commentRepo.findById(id).orElseThrow(() -> new NoSuchElementException());
+    }
+
+    private boolean rightsVerification(User user, Comment comment) {
+        return (user.getRole().equals(Role.ADMIN) || comment.getUser().equals(comment.getUser()));
     }
 }

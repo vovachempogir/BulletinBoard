@@ -3,6 +3,7 @@ package com.example.bulletinboard.controller;
 import com.example.bulletinboard.dto.CreateOrUpdateUser;
 import com.example.bulletinboard.dto.NewPassword;
 import com.example.bulletinboard.dto.UserDto;
+import com.example.bulletinboard.service.ImageService;
 import com.example.bulletinboard.service.UserService;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
@@ -11,9 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-
 
 @Api(tags = "Пользователи")
 @RestController
@@ -23,6 +22,7 @@ import java.io.IOException;
 public class UserController {
 
     private final UserService userService;
+    private final ImageService imageService;
 
     @PostMapping("/set_password")
     public ResponseEntity<Boolean> setPassword (@RequestBody NewPassword newPassword){
@@ -40,13 +40,14 @@ public class UserController {
     }
 
     @PatchMapping(value = "/me/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public byte[] updateImage(@RequestParam("image") MultipartFile image) throws IOException {
-        return userService.updateImage(image);
+    public ResponseEntity<Void> updateImage(@RequestParam("image") MultipartFile image) throws IOException {
+        userService.updateImage(image);
+        return ResponseEntity.ok().build();
     }
 
-    @GetMapping(value = "/image/{userId}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
-    public ResponseEntity<Boolean> downloadAvatar(@PathVariable int userId, HttpServletResponse response) throws IOException {
-        return ResponseEntity.ok(userService.downloadAvatar(userId, response));
+    @GetMapping(value = "/image/{imageId}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<byte[]> getImage(@PathVariable int imageId) {
+        return ResponseEntity.ok(imageService.getImage(imageId));
     }
 
 }

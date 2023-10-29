@@ -22,8 +22,8 @@ public class Comment {
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
-    @ManyToOne
-    @JoinColumn(name = "ad", referencedColumnName = "id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ad_id", referencedColumnName = "id")
     private Ad ad;
 
     @Column(nullable = false)
