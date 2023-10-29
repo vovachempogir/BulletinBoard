@@ -4,6 +4,7 @@ import com.example.bulletinboard.dto.CreateOrUpdateUser;
 import com.example.bulletinboard.dto.NewPassword;
 import com.example.bulletinboard.dto.UserDto;
 import com.example.bulletinboard.entity.User;
+import com.example.bulletinboard.repository.ImageRepo;
 import com.example.bulletinboard.repository.UserRepo;
 import com.example.bulletinboard.service.ImageService;
 import com.example.bulletinboard.service.UserMapper;
@@ -25,6 +26,7 @@ import java.io.*;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepo userRepo;
+    private final ImageRepo imageRepo;
     private final UserMapper userMapper;
     private final UserDetailsManager userDetailsManager;
     private final UserDetails userDetails;
@@ -42,6 +44,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void updateImage(MultipartFile image) throws IOException {
         User user = getUser();
+        imageRepo.delete(user.getImage());
         user.setImage(imageService.upload(image));
         userRepo.save(user);
         log.info("User avatar with id - {} was update", user.getId());

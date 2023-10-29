@@ -71,9 +71,6 @@ public class CommentServiceImpl implements CommentService {
         Ad ad = getAd(adId);
         if (rightsVerification(user, comment)) {
             comment.setText(updateComment.getText());
-            comment.setCreatedAt(Instant.ofEpochMilli(Instant.now().toEpochMilli()));
-            comment.setAd(ad);
-            comment.setUser(user);
             log.info("updateComment");
             return commentMapper.toDto(commentRepo.save(comment));
         } else {
