@@ -20,6 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.NoSuchElementException;
 
+/**
+ * Реализация интерфейса CommentService, предоставляющая функциональность по  созданию, поиску, изменению, удалению комментариев.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -30,6 +33,13 @@ public class CommentServiceImpl implements CommentService {
     private final UserRepo userRepo;
     private final UserDetails userDetails;
 
+    /**
+     * Создает новый комментарий для заданного объявления и сохраняет его в базе данных.
+     *
+     * @param adId идентификатор объявления, для которого создается комментарий
+     * @param createComment объект CreateOrUpdateComment с данными для создания комментария
+     * @return объект CommentDto, представляющий созданный комментарий
+     */
     @Override
     @Transactional
     public CommentDto create(Integer adId, CreateOrUpdateComment createComment) {
@@ -43,6 +53,12 @@ public class CommentServiceImpl implements CommentService {
         return commentMapper.toDto(comment);
     }
 
+    /**
+     * Возвращает список всех комментариев для заданного объявления.
+     *
+     * @param adId идентификатор объявления
+     * @return объект Comments, содержащий список всех комментариев для заданного объявления
+     */
     @Override
     @Transactional
     public Comments getAll(Integer adId) {
@@ -50,6 +66,14 @@ public class CommentServiceImpl implements CommentService {
         return commentMapper.to(commentRepo.findAllByAd_Id(adId));
     }
 
+    /**
+     * Удаляет комментарий по заданному идентификатору для указанного объявления.
+     *
+     * @param adId идентификатор объявления, к которому относится комментарий
+     * @param commentId идентификатор комментария для удаления
+     * @throws ForbiddenException если у пользователя нет прав на удаление комментария
+     * @throws NoSuchElementException если комментарий не найден
+     */
     @Override
     @Transactional
     public void delete(Integer adId, Integer commentId) {
@@ -64,6 +88,16 @@ public class CommentServiceImpl implements CommentService {
         }
     }
 
+    /**
+     * Обновляет информацию о комментарии для заданного объявления.
+     *
+     * @param adId идентификатор объявления, к которому относится комментарий
+     * @param commentId идентификатор комментария
+     * @param updateComment объект CreateOrUpdateComment с обновленными данными комментария
+     * @return объект CommentDto, представляющий обновленный комментарий
+     * @throws ForbiddenException если у пользователя нет прав на изменение комментария
+     * @throws NoSuchElementException если объявление или комментарий не найдены
+     */
     @Override
     @Transactional
     public CommentDto updateComment(Integer adId, Integer commentId, CreateOrUpdateComment updateComment) {
@@ -83,18 +117,45 @@ public class CommentServiceImpl implements CommentService {
         }
     }
 
+    /**
+     * Возвращает объявление по заданному идентификатору.
+     *
+     * @param id идентификатор объявления
+     * @return объект Ad, представляющий найденное объявление
+     * @throws NoSuchElementException если объявление не найдено
+     */
     private Ad getAd(Integer id) {
         return adRepo.findById(id).orElseThrow(()-> new NoSuchElementException("Объявление не найдено")) ;
     }
 
+    /**
+     * Возвращает объект пользователя на основе информации о текущем пользователе.
+     *
+     * @return объект User, представляющий текущего пользователя
+     * @throws UsernameNotFoundException если пользователь не найден
+     */
     private User getUser() {
         return userRepo.findByEmail(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
     }
 
+    /**
+     * Возвращает комментарий по заданному идентификатору.
+     *
+     * @param id идентификатор комментария
+     * @return объект Comment, представляющий найденный комментарий
+     * @throws NoSuchElementException если комментарий не найден
+     */
     private Comment getComment(Integer id) {
         return commentRepo.findById(id).orElseThrow(NoSuchElementException::new);
     }
 
+    /**
+     * Проверяет соответствие прав пользователя для данного комментария.
+     *
+     * @param user пользователь для проверки прав
+     * @param comment комментарий для проверки прав
+     * @return true, если у пользователя есть права на данный комментарий, иначе false
+     */
     private boolean rightsVerification(User user, Comment comment) {
         return (user.getRole().equals(Role.ADMIN) || comment.getUser().equals(comment.getUser()));
     }
