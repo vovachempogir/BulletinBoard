@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Контроллер для аутентификации и регистрации пользователей.
+ */
 @Api(tags = "Авторизация")
 @Slf4j
 @CrossOrigin(value = "http://localhost:3000")
@@ -27,6 +30,11 @@ public class AuthController {
     private final UserMapper userMapper;
     private final AuthUserManager authUserManager;
 
+    /**
+     * Аутентифицирует пользователя с помощью переданных учетных данных.
+     * @param login информация о входе пользователя
+     * @return ответ с результатом аутентификации
+     */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Login login) {
         if (authService.login(login.getUsername(), login.getPassword())) {
@@ -36,6 +44,11 @@ public class AuthController {
         }
     }
 
+    /**
+     * Регистрирует нового пользователя с помощью переданных данных.
+     * @param register информация о регистрации пользователя
+     * @return ответ с результатом регистрации
+     */
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Register register) {
         if (!authService.register(register)) {

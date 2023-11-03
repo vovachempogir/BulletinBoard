@@ -11,8 +11,15 @@ import org.springframework.security.web.SecurityFilterChain;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
+/**
+ * Конфигурационный класс для настройки безопасности
+ */
 @Configuration
 public class WebSecurityConfig {
+
+    /**
+     * Лист для авторизованного пользователя
+     */
     private static final String[] AUTH_WHITELIST = {
             "/swagger-resources/**",
             "/swagger-ui.html",
@@ -25,6 +32,13 @@ public class WebSecurityConfig {
             "/ads/image/**"
     };
 
+
+    /**
+     * Метод фильтрует цепочку безопасности для настройки правил авторизации и аутентификации.
+     * @param http обьект для настройки безопасности.
+     * @return фильтр цепочки безопасности с настройками правил.
+     * @throws Exception ошибки при настройки безопасности
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf()
@@ -42,6 +56,10 @@ public class WebSecurityConfig {
         return http.build();
     }
 
+    /**
+     * Метод предназначен для шифрования паролей
+     * @return объект для шифрования пароля
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

@@ -12,6 +12,9 @@ import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Реализация интерфейса AuthService, предоставляющая функциональность по  проверке входа в систему и регистрации нового пользователя.
+ */
 @Service
 @AllArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -20,6 +23,13 @@ public class AuthServiceImpl implements AuthService {
     private final UserMapper userMapper;
     private final UserRepo userRepo;
 
+    /**
+     * Проверяет, проходит ли вход в систему для заданного имени пользователя и пароля.
+     *
+     * @param userName имя пользователя
+     * @param password пароль пользователя
+     * @return true, если вход в систему прошел успешно, иначе false
+     */
     @Override
     @Transactional
     public boolean login(String userName, String password) {
@@ -30,6 +40,12 @@ public class AuthServiceImpl implements AuthService {
         return encoder.matches(password, userDetails.getPassword());
     }
 
+    /**
+     * Регистрирует нового пользователя с заданными данными регистрации.
+     *
+     * @param register объект Register с данными для регистрации
+     * @return true, если регистрация прошла успешно, иначе false
+     */
     @Override
     @Transactional
     public boolean register(Register register) {
