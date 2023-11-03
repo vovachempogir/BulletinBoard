@@ -4,6 +4,7 @@ import com.example.bulletinboard.dto.*;
 import com.example.bulletinboard.entity.Ad;
 import com.example.bulletinboard.entity.User;
 import com.example.bulletinboard.exception.AdNotFoundException;
+import com.example.bulletinboard.exception.ForbiddenException;
 import com.example.bulletinboard.repository.AdRepo;
 import com.example.bulletinboard.repository.CommentRepo;
 import com.example.bulletinboard.repository.ImageRepo;
@@ -22,7 +23,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.persistence.EntityNotFoundException;
 import java.io.*;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -88,11 +88,13 @@ public class AdServiceImpl implements AdService {
                 foundAd.setTitle(ad.getTitle());
                 foundAd.setPrice(ad.getPrice());
                 foundAd.setDescription(ad.getDescription());
+                log.info("updateAd");
                 return adMapper.fromUpdateAd(adRepo.save(foundAd));
             }else {
-                throw new UnsupportedOperationException("Нет прав на изменение комментария");
+                log.info("notUpdatedAd");
+                throw new ForbiddenException("Нет прав на изменение комментария");
             }
-        }).orElseThrow(() -> new AdNotFoundException());
+        }).orElseThrow(AdNotFoundException::new);
     }
 
     @Override
@@ -104,6 +106,8 @@ public class AdServiceImpl implements AdService {
             commentRepo.deleteAllByAdId(ad.getId());
             adRepo.deleteById(id);
             imageRepo.deleteById(ad.getImage().getId());
+        } else {
+            throw new ForbiddenException("Нет прав на удаление объявления");
         }
     }
 
@@ -114,7 +118,7 @@ public class AdServiceImpl implements AdService {
     }
 
     private boolean rightsVerification(User user, Ad ad) {
-        return (user.getRole() == Role.ADMIN || ad.getUser().equals(user));
+        return (user.getRole() == Role.ADMIN || ad.getUser().equals(ad.getUser()));
     }
 
     private User getUser() {

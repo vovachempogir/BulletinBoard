@@ -4,6 +4,7 @@ import com.example.bulletinboard.dto.*;
 import com.example.bulletinboard.entity.Ad;
 import com.example.bulletinboard.entity.Comment;
 import com.example.bulletinboard.entity.User;
+import com.example.bulletinboard.exception.ForbiddenException;
 import com.example.bulletinboard.repository.AdRepo;
 import com.example.bulletinboard.repository.CommentRepo;
 import com.example.bulletinboard.repository.UserRepo;
@@ -59,7 +60,7 @@ public class CommentServiceImpl implements CommentService {
             log.info("deleteComment");
         } else {
             log.info("notDeleteComment");
-            throw new UnsupportedOperationException("Нет прав на удаление комментария");
+            throw new ForbiddenException("Нет прав на удаление комментария");
         }
     }
 
@@ -78,7 +79,7 @@ public class CommentServiceImpl implements CommentService {
             return commentMapper.toDto(commentRepo.save(comment));
         } else {
             log.info("notUpdateComment");
-            throw new UnsupportedOperationException("Нет прав на изменение комментария");
+            throw new ForbiddenException("Нет прав на изменение комментария");
         }
     }
 
@@ -91,7 +92,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     private Comment getComment(Integer id) {
-        return commentRepo.findById(id).orElseThrow(() -> new NoSuchElementException());
+        return commentRepo.findById(id).orElseThrow(NoSuchElementException::new);
     }
 
     private boolean rightsVerification(User user, Comment comment) {
